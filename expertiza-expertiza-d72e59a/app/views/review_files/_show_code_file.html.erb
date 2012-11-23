@@ -1,0 +1,67 @@
+
+<br/>
+
+<% file_versions = [] %>
+<% @version_fileId_map.sort.each do |version, review_file_id| %>
+    <% file_versions << version.to_i %>
+<% end %>
+
+<!--  THE DIV OF THE TABLE -->
+<div  id="code_review_frame_div" class="margin" style= "border: thin solid;  overflow: auto; border-width: 1px;" >
+  <table width="100%" cellpadding='0' cellspacing='0' style="table-layout: fixed; word-wrap: break-word;" >
+
+    <% for i in 0..@shareObj['linearray2'].size %>
+
+        <% @color = "lightgray" %>
+        <% line2color = "lightgreen"%>
+        <% line2_font_weight = "normal" %>
+
+        <tr bgcolor="<%=@color%>" class="highlight">
+
+
+          <!-- If map contains an entry for this line number then there exists -->
+          <!-- a comment of this row in the html table. -->
+          <% if @highlight_cell_right_file[i] %>
+              <% line2color = 'cyan' %>
+              <% line2_font_weight = "bold" %>
+          <%end%>
+
+
+          <!-- Allow commenting on code file only if this is the most recent version -->
+          <!-- AND if current user is reviewer (i.e. != author/author's team) -->
+          <% if @shareObj['linearray2'][i].blank? %>
+              <td width="4%" id="td_new_<%=i%>" bgcolor="<%=line2color%>" style=" font-weight: <%= line2_font_weight %> ; border-right: thin solid black; vertical-align: top;">
+                <a class="line_number line_number_hover" style="display:block;" href="javascript:void(0)" ><u> <pre><%=(i+1)%></pre></u></a></td>
+          <% elsif @current_review_file.version_number.to_i == file_versions.sort[-1] and session[:user].id != @participant.user_id %>
+              <td width="4%" id="<%=i%>" bgcolor="<%=line2color%>" style=" font-weight: <%= line2_font_weight %> ;  border-right: thin solid black; vertical-align: top;"><a class="line_number line_number_hover" style="display:block;" href="javascript:void(0)" onclick="createComments('<%= i %>', '<%= (i+1) %>', '<%=@shareObj['offsetarray2'][i]%>', '<%=@current_review_file.id %>')"><u> <pre><%= (i+1) %></pre></u></a></td>
+          <% else %>
+              <td width="4%" id="<%=i%>" bgcolor="<%=line2color%>" style=" font-weight: <%= line2_font_weight %> ;  border-right: thin solid black; vertical-align: top;"><a class="line_number line_number_hover" style="display:block;" href="javascript:void(0)" onclick="viewComments('<%= (i+1) %>', '<%=@shareObj['offsetarray2'][i]%>', '<%=@current_review_file.id %>')"><u> <pre><%= (i+1) %></pre></u></a></td>
+          <% end %>
+
+          <td width="1%"></td>
+
+          <!-- THE ACTUAL DATA LINE -->
+          <td width="95%" style="vertical-align: middle;"><pre><%=@shareObj['linearray2'][i]%></pre></td>
+
+        </tr>
+
+    <%end%>
+  </table>
+</div>
+
+<% if false %>
+<br/><br/><%= link_to "<< Back to File Listing", :controller => 'review_files',
+                      :action => 'show_all_submitted_files',
+                      :participant_id => @participant.id %>
+
+<% end %>
+
+<!--   The popup which pops up as one intends to view comments -->
+<!--
+<div id="myDiv2" class="parentDisable" onLoad="assign()"></div>
+<div id="comment_window">
+  <textarea id="forminput" cols=28 rows=5></textarea> <br>
+  <button onclick="ajaxSubmitComment()"><b>Save Comment</b></button>
+</div>
+-->
+

@@ -1,0 +1,189 @@
+<head>
+
+<script type="text/javascript"
+        src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js">
+</script>
+
+<script type="text/javascript"
+        src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.2/jquery-ui.js">
+</script>
+
+<script type="text/javascript">
+
+    // Global Variables for sharing data between Javascript functions.
+    var file_id;
+    var comment_offset;
+    var highlight_cell_id;
+    var noCommentsHtml = "<br/><font style=\"color: #7a7a7a;\">No Comments yet</font>";
+
+    /**
+     * Sends the comment content corresponding to the file offset indicated by
+     * global variable 'comment_offset' to the controller submit_comment which
+     * inserts the comment in the database.
+     */
+    function ajaxSubmitComment() {
+        var commentText = document.getElementById('forminput_2');
+
+        if(!commentText.value) {
+            alert('Cannot save an empty Comment');
+            return;
+        }
+        new Ajax.Request('/review_comment/submit_comment', {
+            method:'get',
+            parameters: {
+                file_id :file_id,
+                file_offset :comment_offset,
+                comment_content :commentText.value
+            }
+        });
+        // Highlight the table cell (containing the line number) just clicked
+        var lineNumCellDom = document.getElementById(highlight_cell_id);
+        lineNumCellDom.style.fontWeight="900";
+        lineNumCellDom.bgColor = "cyan";
+        createComments(highlight_cell_id, line_number, comment_offset, file_id);
+    }
+
+    /** HELPER METHOD
+     * Hides the comment Window.
+     */
+    function hideCommentWindow() {
+        $("#myDiv2").fadeOut();
+    }
+
+    /** HELPER METHOD
+     * Constructs an image link 'X' for closing the comment window and returns 
+     * markup as a string.
+     */
+    function constructCloseWindowLink() {
+        return "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href='javascript:void(0)' " +
+                "onclick='hideCommentWindow()'><img float='right' class='close_button'" +
+                "src='/images/tree_view/delete-icon-16.png' alt='Icon'></a><br>";
+    }
+
+    /** HELPER METHOD
+     * Constructs a header indicating the line number corresponding to the
+     * comment(s) displayed in the comment Window.
+     * @params line_number The line number for which the comment Window
+     *                     displays comments.
+     */
+    function constructWindowHeader(line_number) {
+        return "<b style='font-size: larger;'><u>" + "Comments for Line# " +
+                line_number + "</u></b>" + constructCloseWindowLink();
+    }
+
+    /**
+     * Displays the comments corresponding to 'line_number' in a comment Window.
+     *
+     * @param line_number Line number for which comments are to be displayed.
+     * @param offset the file offset for which the comments are to be fetched
+     * @param fileId the file id of the review file for which comments are to
+     *               be fetched.
+     */
+    function viewComments(line_number, offset, fileId) {
+        var commentWindowDom = document.getElementById('myDiv2');
+
+        new Ajax.Request('/review_comment/get_comment', {
+            method: 'get',
+            parameters: {
+                file_id: fileId,
+                file_offset: offset
+            },
+            onSuccess: function(return_value) {
+                var all_comments = return_value.responseText ?
+                        return_value.responseText : noCommentsHtml;//"No Comments yet<br/>";
+
+                commentWindowDom.innerHTML = constructWindowHeader(line_number) +
+                        "<br>" + all_comments;
+                $('#myDiv2').fadeIn();
+            },
+            onFailure: function() { alert("Failed to retrieve comments for this Line") }
+        });
+    }
+
+    /**
+     * Method to display all existing comments corresponding to the 'clicked'
+     * line number and to also display the form for submitting more comments.
+     *
+     * @param cell_id contains the div id of the cell in the main diff display table
+     *          tp be highlighted.
+     * @param line_num Line Number for which the comments are to be displayed/saved.
+     * @param offset Character offset of the beginning of this line from file start.
+     * @param fileId The fileId of the review file which is being commented.
+     */
+    function createComments(cell_id, line_num, offset, fileId) { // or filepath
+
+        // Store the following data in the global variables for access in another method
+        file_id = fileId;
+        comment_offset = offset;
+        highlight_cell_id = cell_id;
+        line_number = line_num;
+
+        // Grab existing HTML of the comment window -- contains textarea for
+        // writing comments plus a Submit button.
+        var commentForm = document.getElementById('comment_window').innerHTML;
+
+        // Dom corr to the comment Window. This dom will be populated with
+        // (a) existing comments and (b) form to submit a new comment
+        var commentWindowDom = document.getElementById('myDiv2');
+
+        new Ajax.Request('/review_comment/get_comment', {
+            method: 'get',
+            parameters: {
+                file_id: fileId,
+                file_offset: offset
+            },
+            onSuccess: function(return_value) {
+                var all_comments = return_value.responseText ?
+                        return_value.responseText : noCommentsHtml+"<br/>";//"No Comments yet<br/>";
+
+                var commentWindowHtml = constructWindowHeader(line_num) + "<br>" +
+                        all_comments + "<br>" + commentForm;
+
+                // To avoid div id contention, change name of div ids.
+                commentWindowHtml = commentWindowHtml.replace("forminput","forminput_2");
+                commentWindowDom.innerHTML = commentWindowHtml;
+                $('#myDiv2').fadeIn();
+            },
+            onFailure: function(){ alert("Failed to retrieve comments for this Line") }
+        });
+    }
+
+
+</script>
+
+
+</head>
+
+
+<font face="courier" size="2">
+
+  <script>
+      $(document).ready (
+          function() {
+              $("#myDiv2").draggable();
+              $("#comment_window").fadeOut(0);
+          }
+      );
+  </script>
+
+  </br>
+
+
+
+<%=  render :partial => 'show_code_file_common_1' %>
+
+<div id="dashboard_header" class = "dashboard_content_css" >
+
+<%= render :partial => 'show_code_file_common_2' %>
+
+</div>
+
+<%=  render :partial => 'show_code_file' %>
+
+<%=  render :partial => 'show_code_file_common_3' %>
+
+</font>
+
+
+
+

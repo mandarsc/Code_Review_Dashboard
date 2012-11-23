@@ -1,0 +1,137 @@
+
+
+<br/>
+
+<% file_versions = [] %>
+<% @version_fileId_map.sort.each do |version, review_file_id| %>
+    <% file_versions << version.to_i %>
+<% end %>
+
+<div id="version_header" class="version_diff_header" >
+  <table width="100%"  cellpadding='0' cellspacing='4' >
+    <tr >
+      <td>&nbsp;&nbsp; </td>
+      <td><b style="font-size: large;">
+        <%= File.basename(@file_on_left.filepath) %></b>&nbsp;&nbsp;<b>Version:</b><b style="font-size: large;">[<%= @file_on_left.version_number %>]</b></td>
+      <td>&nbsp;&nbsp; </td>
+      <td><b style="font-size: large;">
+        <%= File.basename(@file_on_right.filepath) %></b>&nbsp;&nbsp;<b>Version:</b><b style="font-size: large;">[<%= @file_on_right.version_number %>]</b></td>
+    </tr>
+  </table>
+</div>
+
+
+<!--  THE DIV OF THE TABLE -->
+<div  id="code_review_frame_div" class="margin" style= "border: thin solid;  overflow: auto; border-width: 1px;" >
+  <table width="100%" cellpadding='0' cellspacing='0' style="table-layout: fixed; word-wrap: break-word;" >
+
+    <% for i in 0..@shareObj['linearray1'].size %>
+
+        <% @color = "White" %>
+        <% line1color = "lightgray"%>
+        <% line2color = "lightgray"%>
+        <% line1_font_weight = "normal" %>
+        <% line2_font_weight = "normal" %>
+
+        <!-- THESE FOUR STATEMENTS DETERMINE THE COLOR OF THE ROW -->
+        <% if (@shareObj['comparator'][i] == DiffHelper::ADDED) then @color="palegreen"%><%end%>
+        <% if (@shareObj['comparator'][i] == DiffHelper::DELETED) then @color="pink"%><%end%>
+        <% if (@shareObj['comparator'][i] == DiffHelper::CHANGED) then @color="#FEF5CA"%><%end%>
+        <% if (@shareObj['comparator'][i] == DiffHelper::UNCHANGED) then @color="WHITE"%><%end%>
+
+        <% if (@shareObj['comparator'][i] == DiffHelper::ADDED) then line1color="#7CCD7C"%><%end%>
+        <% if (@shareObj['comparator'][i] == DiffHelper::DELETED) then line1color="#FF6A6A"%><%end%>
+        <% if (@shareObj['comparator'][i] == DiffHelper::CHANGED) then line1color="khaki"%><%end%>
+        <% if (@shareObj['comparator'][i] == DiffHelper::UNCHANGED) then line1color="lightgray"%><%end%>
+
+        <% if (@shareObj['comparator'][i] == DiffHelper::ADDED) then line2color="#7CCD7C"%><%end%>
+        <% if (@shareObj['comparator'][i] == DiffHelper::DELETED) then line2color="#FF6A6A"%><%end%>
+        <% if (@shareObj['comparator'][i] == DiffHelper::CHANGED) then line2color="khaki"%><%end%>
+        <% if (@shareObj['comparator'][i] == DiffHelper::UNCHANGED) then line2color="lightgray"%><%end%>
+        <tr bgcolor="<%=@color%>" class="highlight">
+
+          <!-- FILE ON LEFT -->
+          <!-- If map contains an entry for this line number then there exists -->
+          <!-- a comment of this row in the html table. -->
+          <% if @highlight_cell_left_file[i] %>
+              <% line1color = 'cyan' %>
+              <% line1_font_weight = "bold" %>
+          <%end%>
+
+
+          <!-- LINE NUMBER 1   -->
+          <td width="4%" id="td_old_<%=i%>" bgcolor="<%=line1color%>" style="font-weight: <%= line1_font_weight %> ;border-right: thin solid black;vertical-align: top;"><a class="line_number line_number_hover" style="display:block;" href="javascript:void(0)" onclick="viewComments('<%= @shareObj['linenumarray1'][i] %>', '<%=@shareObj['offsetarray1'][i]%>', '<%=@file_on_left.id %>' )"><u> <pre><%=@shareObj['linenumarray1'][i]%></pre></u></a></td>
+          <td width="1%"></td>
+
+          <!-- THE ACTUAL DATA LINE -->
+          <td width="45%" style="vertical-align: middle;"><pre><%=@shareObj['linearray1'][i]%></pre></td>
+
+          <!-- FILE ON RIGHT -->
+          <!-- If map contains an entry for this line number then there exists -->
+          <!--  a comment of this row in the html table. -->
+          <% if @highlight_cell_right_file[i] %>
+              <% line2color = 'cyan' %>
+              <% line2_font_weight = "bold" %>
+          <%end%>
+
+          <!-- Allow commenting on code file only if this is the most recent version -->
+          <!-- AND if current user is reviewer (i.e. != author/author's team) -->
+          <% if @shareObj['linearray2'][i].blank? %>
+              <td width="4%" id="td_new_<%=i%>" bgcolor="<%=line2color%>" style=" font-weight: <%= line2_font_weight %> ; border-left: thin solid black; border-right: thin solid black; vertical-align: top;">
+                <a class="line_number line_number_hover" style="display:block;" href="javascript:void(0)" ><u> <pre><%=@shareObj['linenumarray2'][i]%></pre></u></a></td>
+          <% elsif @current_review_file.version_number.to_i >= file_versions.sort[-2] and session[:user].id != @participant.user_id %>
+              <td width="4%" id="td_new_<%=i%>" bgcolor="<%=line2color%>" style=" font-weight: <%= line2_font_weight %> ; border-left: thin solid black; border-right: thin solid black; vertical-align: top;">
+                <a class="line_number line_number_hover" style="display:block;" href="javascript:void(0)" onclick="createComments('td_new_<%= i %>', '<%= @shareObj['linenumarray2'][i] %>', '<%=@shareObj['offsetarray2'][i]%>', '<%=@file_on_right.id %>')"><u> <pre><%=@shareObj['linenumarray2'][i]%></pre></u></a></td>
+          <% else %>
+              <td width="4%" id="td_new_<%=i%>" bgcolor="<%=line2color%>" style=" font-weight: <%= line2_font_weight %> ; border-left: thin solid black; border-right: thin solid black; vertical-align: top;">
+                <a class="line_number line_number_hover" style="display:block;" href="javascript:void(0)" onclick="viewComments('<%= @shareObj['linenumarray2'][i] %>', '<%=@shareObj['offsetarray2'][i]%>', '<%=@file_on_right.id %>')"><u> <pre><%=@shareObj['linenumarray2'][i]%></pre></u></a></td>
+          <% end %>
+
+          <td width="1%"></td>
+
+          <!-- THE ACTUAL DATA LINE -->
+          <td width="45%" style="vertical-align: middle;"><pre><%=@shareObj['linearray2'][i]%></pre></td>
+
+        </tr>
+
+    <%end%>
+  </table>
+</div>
+
+<br/><br/>
+
+<table width="100%">
+  <tr>
+    <td valign="top">
+      <%= link_to "<< Back to File Listing", :controller => 'review_files',
+                  :action => 'show_all_submitted_files',
+                  :participant_id => @participant.id %>
+    </td>
+
+    <td valign="top" align="right">
+      <a href="javascript:void(0)" id="color_guide_link" name="color_guideLink" onClick="toggleElement('color_guide','colorGuide');return false;">Color guide</a><br/>
+      <div id="color_guide" style="display: none;">
+        <table class="general">
+          <br/>
+          <tr align="center">
+            <td bgcolor="white" width='20%'>Unchanged</td>
+            <td bgcolor="#FEF5CA" width='20%'>Changed</td>
+            <td bgcolor="pink" width='20%'>Deleted</td>
+            <td bgcolor="palegreen" width='20%'>Added</td>
+            <td bgcolor="cyan" width='20%'>Contains<br/>Comment(s)</td>
+          </tr>
+        </table>
+      </div>
+    </td>
+  </tr>
+</table>
+
+<!--   The popup which pops up as one intends to click or view comments -->
+
+<!--
+<div id="myDiv2" class="parentDisable" onLoad="assign()"></div>
+<div id="comment_window">
+  <textarea id="forminput" cols=28 rows=5></textarea> <br>
+  <button onclick="ajaxSubmitComment()"><b>Save Comment</b></button>
+</div>
+-->
